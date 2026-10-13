@@ -33,9 +33,9 @@ build/
 .vscode/
 
 ### 浏览器验证产物（Playwright MCP）###
+### 本项目没有需要入库的 png 资源；若以后新增，记得在这里放行
 .playwright-mcp/
-page-*.png
-top.png
-drawer.png
-mcp.png
-dark.png
+*.png
+
+### 元数据抓取缓存（本地，可再生）###
+meta.cache.json

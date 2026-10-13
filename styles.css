@@ -254,6 +254,14 @@ mark{background:var(--mark);color:inherit;padding:.05em .1em;border-radius:2px}
 .dfoot button:hover{border-color:var(--muted);color:var(--ink)}
 .dfoot button.primary{flex:1;background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
 .dfoot button.primary:hover{opacity:.9;color:var(--accent-fg)}
+.drepodesc{margin:0 0 9px;font-size:14px;line-height:1.6;color:var(--nav-fg)}
+.dstats{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px}
+.dstats span{
+  font:400 12px/1.5 var(--mono);color:var(--muted);
+  background:var(--code-bg);border-radius:3px;padding:3px 7px;
+}
+.dlink{font-size:13px;color:var(--accent);text-decoration:none;word-break:break-all}
+.dlink:hover{text-decoration:underline}
 tr[data-key]{cursor:pointer}
 tr[data-key]:hover td.name{color:var(--accent)}
 

@@ -12,10 +12,18 @@ const rail = document.getElementById("rail");
 const qEl = document.getElementById("q");
 const resEl = document.getElementById("results");
 
+/* 外部元数据（meta.gen.js，由 build-meta.py 生成）。
+   缺这个文件也能跑，只是少掉「官方自述」和「仓库与来源」两节。 */
+const METADATA = (typeof META === "undefined") ? null : META;
+
 /* 侧栏与导语里的汇总数字取自 data.js 的 STATS，不写死 */
 document.querySelectorAll("[data-stat]").forEach(el => {
   el.textContent = STATS[el.dataset.stat];
 });
+if(METADATA){
+  const el = document.getElementById("metadate");
+  if(el) el.textContent = `元数据抓取于 ${METADATA.generatedAt.slice(0, 10)}`;
+}
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
@@ -477,6 +485,37 @@ function field(label, html){
   return html ? `<div class="dfield"><h4>${label}</h4>${html}</div>` : "";
 }
 
+/* ---- 外部元数据的取值辅助（METADATA 本身声明在文件顶部） ---- */
+
+function blurbOf(key){
+  if(!METADATA) return "";
+  return METADATA.skillBlurb[key] || METADATA.agentBlurb[key] || "";
+}
+
+function repoOf(key){
+  if(!METADATA) return null;
+  /* 插件查自己的映射；技能沿所属插件；子代理统一来自装它们的那个市场 */
+  const owner = (METADATA.skillPlugin || {})[key];
+  const slug = METADATA.pluginRepo[key]
+            || (owner ? METADATA.pluginRepo[owner] : null)
+            || (METADATA.agentBlurb[key] ? METADATA.agentRepo : null);
+  if(!slug) return null;
+  return METADATA.repos[slug]
+      || { url: `https://github.com/${slug}`, desc:"", stars:null, pushed:"", license:null, archived:false };
+}
+
+function repoHTML(r){
+  const bits = [];
+  if(r.stars != null) bits.push(`★ ${r.stars.toLocaleString("en-US")}`);
+  if(r.pushed) bits.push(`最近提交 ${r.pushed}`);
+  if(r.license) bits.push(r.license);
+  if(r.archived) bits.push("已归档");
+  return (r.desc ? `<p class="drepodesc">${esc(r.desc)}</p>` : "")
+    + (bits.length ? `<div class="dstats">${bits.map(b => `<span>${esc(b)}</span>`).join("")}</div>` : "")
+    + `<a class="dlink" href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.url.replace(/^https?:\/\//, ""))}</a>`
+    + (METADATA ? `<div class="dstats" style="margin-top:9px"><span>抓取于 ${esc(r.fetched || METADATA.generatedAt.slice(0,10))}</span></div>` : "");
+}
+
 function openDrawer(key){
   const d = DETAIL[key];
   if(!d) return false;
@@ -492,9 +531,13 @@ function openDrawer(key){
         : `<span class="${clsOf(c)}" data-copy="${esc(c)}" title="点击复制">${esc(c)}</span>`) +
       `</div>`).join("")}</div>`));
   parts.push(field("安装与启用", `<p>${idify(INSTALL[d.k] || "")}</p>`));
+  const blurb = blurbOf(key);
+  if(blurb) parts.push(field("官方自述", `<p>${esc(blurb)}</p>`));
   if(d.pair && d.pair.length) parts.push(field("搭配推荐", links(d.pair, "dlinks")));
   if(d.note) parts.push(field("注意事项", `<p>${idify(d.note)}</p>`));
   if(d.rel && d.rel.length)  parts.push(field("相关条目", links(d.rel, "dlinks")));
+  const repo = repoOf(key);
+  if(repo) parts.push(field("仓库与来源", repoHTML(repo)));
 
   drawer.innerHTML =
     `<div class="dhead">
