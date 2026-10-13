@@ -221,7 +221,8 @@ def main():
     slugs = sorted({v["slug"] for v in plugin_repo.values() if v.get("slug")}
                    | {market_repo.get(AGENT_MARKET)})
     slugs = [s for s in slugs if s]
-    cache_path = OUT.with_name("meta.cache.json")
+    cache_path = OUT.parent / "tmp" / "meta.cache.json"
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
     cache = load_json(cache_path, {})
     print(f"读取 {len(slugs)} 个仓库：")
     repos = {}
