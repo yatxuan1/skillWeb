@@ -68,14 +68,14 @@ const SECTIONS = [
 {
   id:"skills", num:"2", title:"技能 Skills",
   blocks:[
-    {t:"h3", x:"2.1 用户自建（~/.claude/skills/，共 3 个）"},
+    {t:"h3", x:"2.1 用户自建（~/.claude/skills/，共 {{rows}} 个）"},
     {t:"table", head:["技能","用途"], rows:[
       ["skill-creator","创建/更新 Skill 的标准化指南：模板、目录规范、打包验证"],
       ["web-to-app","用 Rust + Tauri 把任意网页打包成 macOS/Windows/Linux 桌面应用"],
       ["viral-video-copywriting","对标抖音爆款视频，拆解方法论并创作原创文案"]
     ]},
 
-    {t:"h3", x:"2.2 插件自带（37 个）"},
+    {t:"h3", x:"2.2 插件自带（{{rows}} 个）"},
     {t:"p", x:"<b>superpowers</b> —— 工程流程主干，共 15 个。"},
     {t:"table", head:["技能","用途"], rows:[
       ["brainstorming","创意类工作前必用：把想法变成设计与规格"],
@@ -123,7 +123,7 @@ const SECTIONS = [
       ["karpathy-guidelines","andrej-karpathy-skills","编码行为准则，减少常见 LLM 错误"]
     ]},
 
-    {t:"h3", x:"2.3 Claude Code 内置（13 个）"},
+    {t:"h3", x:"2.3 Claude Code 内置（{{rows}} 个）"},
     {t:"table", head:["技能","用途"], rows:[
       ["code-review","审查当前 diff / PR / 分支，查正确性 Bug"],
       ["simplify","只做质量优化：复用、简化、效率、抽象层级"],
@@ -166,7 +166,7 @@ const SECTIONS = [
       ["silent-failure-hunter","pr-review-toolkit","猎捕静默失败、错误吞噬、不当兜底"],
       ["type-design-analyzer","pr-review-toolkit","类型设计质量分析"]
     ]},
-    {t:"h3", x:"3.3 自定义子代理（~/.claude/agents/，共 216 个）"},
+    {t:"h3", x:"3.3 自定义子代理（~/.claude/agents/，共 {{agents}} 个）"},
     {t:"p", x:"文件名一律英文 kebab-case，界面里显示中文名。按前缀分组，少于 3 个的前缀并入「其他」。"},
     {t:"agents"}
   ]
@@ -1419,3 +1419,33 @@ AGENTS.forEach(([file, cn, desc]) => {
     pair:[], rel:[], note:""
   };
 });
+
+/* ============================================================
+   汇总数字
+   ------------------------------------------------------------
+   全部由上面的数据算出，正文和侧栏都不要再写死。
+   标题里可以用 {{rows}}（该标题名下表格的行数）或 {{agents}} 等占位。
+   ============================================================ */
+
+/* 给每个 h3 记下它名下表格的总行数，供 {{rows}} 使用 */
+SECTIONS.forEach(sec => {
+  let cur = null;
+  sec.blocks.forEach(b => {
+    if(b.t === "h3"){ cur = b; b.n = 0; }
+    else if(b.t === "table" && cur) cur.n += b.rows.length;
+  });
+});
+
+const blocksOf = id => {
+  const sec = SECTIONS.find(s => s.id === id);
+  return sec ? sec.blocks : [];
+};
+const tableRowsOf = id =>
+  blocksOf(id).reduce((n, b) => n + (b.t === "table" ? b.rows.length : 0), 0);
+
+const STATS = {
+  plugins: tableRowsOf("plugins"),
+  skills:  tableRowsOf("skills"),
+  mcp:     blocksOf("mcp").filter(b => b.t === "h3").length,
+  agents:  AGENTS.length
+};

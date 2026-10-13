@@ -12,7 +12,20 @@ const rail = document.getElementById("rail");
 const qEl = document.getElementById("q");
 const resEl = document.getElementById("results");
 
+/* 侧栏与导语里的汇总数字取自 data.js 的 STATS，不写死 */
+document.querySelectorAll("[data-stat]").forEach(el => {
+  el.textContent = STATS[el.dataset.stat];
+});
+
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* 把 {{token}} 换成 data.js 算出的数字，未识别的原样保留 */
+function subst(s, extra){
+  return String(s).replace(/\{\{(\w+)\}\}/g, (m, k) => {
+    if(extra && k in extra) return extra[k];
+    return k in STATS ? STATS[k] : m;
+  });
+}
 
 /* 判断一段内容该用哪种样式 */
 function clsOf(v){
@@ -77,7 +90,7 @@ function keyFor(secId, row){
 }
 
 function renderBlock(b, secId){
-  if(b.t === "h3") return `<h3>${esc(b.x)}</h3>`;
+  if(b.t === "h3") return `<h3>${esc(subst(b.x, {rows: b.n}))}</h3>`;
   if(b.t === "p")  return `<p>${idify(b.x)}</p>`;
   if(b.t === "ul") return `<ul class="plain">${b.items.map(i => `<li>${idify(i)}</li>`).join("")}</ul>`;
   if(b.t === "note") return `<div class="note">${idify(b.x)}</div>`;
