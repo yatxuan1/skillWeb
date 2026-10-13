@@ -97,8 +97,22 @@ function keyFor(secId, row){
   return null;
 }
 
+/* 运行状态来自 build-meta.py 的探测。表格里只给「不可用」的加角标——
+   可用的也标一遍的话，满屏 ✓ 反而看不出问题在哪。 */
+function statusOf(key){
+  const st = (METADATA && METADATA.status) || {};
+  return (key && st[key]) || null;
+}
+
+function statusBadge(key){
+  const st = statusOf(key);
+  return (st && !st.ok)
+    ? `<span class="sbadge" title="${esc(st.reason)}">不可用</span>`
+    : "";
+}
+
 function renderBlock(b, secId){
-  if(b.t === "h3") return `<h3>${esc(subst(b.x, {rows: b.n}))}</h3>`;
+  if(b.t === "h3") return `<h3>${esc(subst(b.x, {rows: b.n}))}${statusBadge(b.k)}</h3>`;
   if(b.t === "p")  return `<p>${idify(b.x)}</p>`;
   if(b.t === "ul") return `<ul class="plain">${b.items.map(i => `<li>${idify(i)}</li>`).join("")}</ul>`;
   if(b.t === "note") return `<div class="note">${idify(b.x)}</div>`;
@@ -106,11 +120,12 @@ function renderBlock(b, secId){
   if(b.t === "table"){
     const head = b.head.map(h => `<th>${esc(h)}</th>`).join("");
     const rows = b.rows.map(r => {
+      const k = keyFor(secId, r);
+      const badge = statusBadge(k);
       const tds = r.map((c,i) => {
         const cls = i === 0 ? "name" : (i === r.length - 1 && r.length > 2 ? "wide" : "");
-        return `<td class="${cls}">${idify(c)}</td>`;
+        return `<td class="${cls}">${idify(c)}${i === 0 ? badge : ""}</td>`;
       }).join("");
-      const k = keyFor(secId, r);
       return k ? `<tr data-key="${esc(k)}">${tds}</tr>` : `<tr>${tds}</tr>`;
     }).join("");
     return `<table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`;
@@ -531,6 +546,10 @@ function openDrawer(key){
         : `<span class="${clsOf(c)}" data-copy="${esc(c)}" title="点击复制">${esc(c)}</span>`) +
       `</div>`).join("")}</div>`));
   parts.push(field("安装与启用", `<p>${idify(INSTALL[d.k] || "")}</p>`));
+  const st = statusOf(key);
+  if(st) parts.push(field("运行状态", st.ok
+    ? `<p class="sok">已配置且可用</p>`
+    : `<p class="sbad">已配置，但当前不可用：${esc(st.reason)}</p>`));
   const blurb = blurbOf(key);
   if(blurb) parts.push(field("官方自述", `<p>${esc(blurb)}</p>`));
   if(d.pair && d.pair.length) parts.push(field("搭配推荐", links(d.pair, "dlinks")));

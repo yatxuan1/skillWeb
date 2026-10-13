@@ -205,7 +205,11 @@ const SECTIONS = [
       ["smart_search / smart_outline / smart_unfold","tree-sitter 结构化代码探索"],
       ["observation_search / observation_context","全文检索历史观察"],
       ["build_corpus / prime_corpus / query_corpus","构建并查询专属知识库"]
-    ]}
+    ]},
+
+    {t:"h3", k:"context7", x:"4.5 context7 — 库文档检索"},
+    {t:"p", x:"配置在全局 <code>mcpServers</code> 里，启动命令是 <code>npx -y @upstash/context7-mcp</code>。用途是按库名调取最新版本文档，供我查阅。"},
+    {t:"note", x:"<b>当前连接失败</b>。<code>claude mcp list</code> 报 <code>CONNECTION_CLOSED</code>，本会话拿不到它的任何工具。<b>因此它的工具清单列不出来</b>——连不上就不列，不臆造。"}
   ]
 },
 {
@@ -1144,6 +1148,14 @@ const DETAIL = {
  pair:[["smart-explore","同一插件里的代码搜索"]],
  rel:[["memory","另一套独立的知识图谱"]],
  note:"三层走法的意义是省 token：先拿索引过滤，只对真正关心的几条取全文。",
+},
+"context7":{k:"mcp",
+ intro:"按库名调取最新版本文档的 MCP 服务，由 Upstash 提供。",
+ when:"想让我查某个外部库的当前用法，而不是凭记忆答时。",
+ how:[["启动命令","npx -y @upstash/context7-mcp"]],
+ pair:[],
+ rel:[["codegraph","查的是你本机代码，它查的是外部库文档"]],
+ note:"当前连不上，等于不可用。要用先在本机跑通 npx -y @upstash/context7-mcp 再排查。修好之前它的工具我这边一个都调不到。",
 },
 "search":{k:"mcp",p:"claude-mem mcp-search",
  intro:"记忆检索第一层，返回带 ID 的索引，每条约 50 到 100 token。",

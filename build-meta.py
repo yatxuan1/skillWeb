@@ -17,6 +17,8 @@ import datetime
 import json
 import pathlib
 import re
+import shutil
+import subprocess
 import urllib.error
 import urllib.request
 
@@ -123,6 +125,46 @@ def first_paragraph(path, limit=170):
     return para
 
 
+def probe_status(installed):
+    """探测运行状态：MCP 连接情况 + 插件的运行时依赖。
+
+    「已配置」和「能用」是两件事。这里只报事实，不做推断——
+    探不到的就不写，宁可缺也不编。
+    """
+    st = {}
+
+    if shutil.which("claude") is None:
+        print("  ! 找不到 claude 命令，跳过 MCP 连接探测")
+    else:
+        try:
+            r = subprocess.run(["claude", "mcp", "list"], capture_output=True, text=True, timeout=120)
+            for line in r.stdout.splitlines():
+                line = line.strip()
+                if " - " not in line:
+                    continue
+                head, tail = line.rsplit(" - ", 1)
+                name = head.split(": ", 1)[0]
+                if name.startswith("plugin:"):          # plugin:claude-mem:mcp-search
+                    name = name.split(":")[-1]
+                ok = tail.lstrip().startswith("✔")
+                st[name] = {
+                    "ok": ok,
+                    "kind": "mcp",
+                    "reason": "" if ok else tail.lstrip("✘ ").strip(),
+                }
+        except Exception as e:
+            print(f"  ! claude mcp list 失败：{e}")
+
+    # 插件的运行时依赖：装了插件但依赖不在，等于没装
+    # （installed 的键形如 pyright-lsp@claude-plugins-official，要比对去后缀的名字）
+    installed_names = {k.split("@")[0] for k in installed}
+    for plug, dep in {"pyright-lsp": "pyright"}.items():
+        if plug in installed_names and shutil.which(dep) is None:
+            st[plug] = {"ok": False, "kind": "plugin", "reason": f"依赖 {dep} 未安装，插件不生效"}
+
+    return st
+
+
 def main():
     installed = load_json(PLUGIN_DIR / "installed_plugins.json", {}).get("plugins", {})
     markets = load_json(PLUGIN_DIR / "known_marketplaces.json", {})
@@ -196,9 +238,16 @@ def main():
         out["fetched"] = datetime.datetime.fromtimestamp(r.get("_at", 0)).strftime("%Y-%m-%d")
         return out
 
+    # ---- 运行状态探测 ----
+    print("探测运行状态：")
+    status = probe_status(installed)
+    for k, v in sorted(status.items()):
+        print(f"  {'✓' if v['ok'] else '✗'} {k}" + ("" if v["ok"] else f"  {v['reason']}"))
+
     # ---- 输出 ----
     payload = {
         "generatedAt": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
+        "status": status,
         "repos": {k: clean(v) for k, v in repos.items()},
         "pluginRepo": {k: v["slug"] for k, v in plugin_repo.items() if v.get("slug")},
         "agentRepo": market_repo.get(AGENT_MARKET),

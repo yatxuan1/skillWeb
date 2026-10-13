@@ -7,6 +7,7 @@
   --note-bg:#F7F7F5; --note-fg:#4A5058;
   --id-line:#D6DAE0; --id-hover:#E7EAEE;
   --input-bg:#FFFFFF; --placeholder:#A6ACB6; --dot:#C3C8D0;
+  --bad-fg:#9A4B3C; --bad-bg:#F7E5E1; --bad-line:#E8C8C1;
   --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
   --serif:"Songti SC","Noto Serif SC",Charter,Georgia,serif;
   --mono:"SF Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
@@ -21,6 +22,7 @@ html[data-theme="dark"]{
   --note-bg:#1B1F26; --note-fg:#A8AFBA;
   --id-line:#333941; --id-hover:#252A32;
   --input-bg:#191D24; --placeholder:#6B7280; --dot:#3E444D;
+  --bad-fg:#E8A79A; --bad-bg:#3A211C; --bad-line:#5A3229;
   color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:border-box}
@@ -262,6 +264,16 @@ mark{background:var(--mark);color:inherit;padding:.05em .1em;border-radius:2px}
 }
 .dlink{font-size:13px;color:var(--accent);text-decoration:none;word-break:break-all}
 .dlink:hover{text-decoration:underline}
+
+/* ---------- 运行状态 ---------- */
+.sbadge{
+  display:inline-block;margin-left:7px;vertical-align:1px;
+  font:400 11px/1.6 var(--sans);padding:1px 6px;border-radius:3px;
+  color:var(--bad-fg);background:var(--bad-bg);border:1px solid var(--bad-line);
+  white-space:nowrap;
+}
+.sbad{color:var(--bad-fg)}
+.sok{color:var(--muted)}
 tr[data-key]{cursor:pointer}
 tr[data-key]:hover td.name{color:var(--accent)}
 

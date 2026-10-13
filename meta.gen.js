@@ -1,7 +1,39 @@
 "use strict";
 /* 本文件由 build-meta.py 生成，请勿手改。重跑该脚本即可刷新。 */
 const META = {
- "generatedAt": "2026-10-13T17:59:33+08:00",
+ "generatedAt": "2026-10-13T18:09:04+08:00",
+ "status": {
+  "mcp-search": {
+   "ok": true,
+   "kind": "mcp",
+   "reason": ""
+  },
+  "codegraph": {
+   "ok": true,
+   "kind": "mcp",
+   "reason": ""
+  },
+  "context7": {
+   "ok": false,
+   "kind": "mcp",
+   "reason": "Failed to connect — CONNECTION_CLOSED: Connection closed"
+  },
+  "playwright": {
+   "ok": true,
+   "kind": "mcp",
+   "reason": ""
+  },
+  "memory": {
+   "ok": true,
+   "kind": "mcp",
+   "reason": ""
+  },
+  "pyright-lsp": {
+   "ok": false,
+   "kind": "plugin",
+   "reason": "依赖 pyright 未安装，插件不生效"
+  }
+ },
  "repos": {
   "anthropics/claude-plugins-official": {
    "url": "https://github.com/anthropics/claude-plugins-official",
