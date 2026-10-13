@@ -267,6 +267,7 @@ SECTIONS.forEach(sec => {
       const a = document.createElement("a");
       a.href = `#${h.id}`;
       a.dataset.sub = h.id;
+      a.dataset.sec = sec.id;
       a.textContent = h.textContent.trim().split("（")[0].trim();
       subBox.appendChild(a);
     });
@@ -595,9 +596,11 @@ function syncNav(){
   }
   navLinks.forEach(a => a.classList.toggle("on", a.dataset.sec === cur));
 
-  /* 折叠起来的小节 offsetParent 是 null，不参与判定 */
+  /* 折叠起来的小节 offsetParent 是 null，不参与判定；
+     每个小节只在自己所属章节是当前章节时才可能被选中 */
   let curSub = "";
   subLinks.forEach(a => {
+    if(a.dataset.sec !== cur) return;
     const el = document.getElementById(a.dataset.sub);
     if(el && el.offsetParent !== null && el.getBoundingClientRect().top <= 90) curSub = a.dataset.sub;
   });

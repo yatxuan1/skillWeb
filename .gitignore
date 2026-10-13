@@ -31,3 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### 浏览器验证产物（Playwright MCP）###
+.playwright-mcp/
+page-*.png
+top.png
+drawer.png
+mcp.png
+dark.png
