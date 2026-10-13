@@ -70,17 +70,44 @@ a{color:var(--accent)}
 .chips button.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .chips button .c{font:400 11px/1 var(--mono);opacity:.55;font-variant-numeric:tabular-nums}
 
-nav{display:flex;flex-direction:column;gap:1px}
-nav a{
-  display:flex;gap:10px;align-items:baseline;
+nav{display:flex;flex-direction:column;gap:2px}
+.navgroup{display:flex;flex-direction:column;gap:1px}
+.navrow{display:flex;align-items:center;gap:1px}
+.navrow a{
+  display:flex;gap:10px;align-items:baseline;flex:1;min-width:0;
   padding:6px 8px;border-radius:4px;text-decoration:none;color:var(--nav-fg);
   font-size:14px;border-left:2px solid transparent;margin-left:-2px;
 }
-nav a .n{font:400 11px/1 var(--mono);color:var(--nav-n);min-width:14px;padding-top:3px}
-nav a:hover{background:var(--rule-soft);color:var(--ink)}
-nav a.on{color:var(--accent);background:var(--accent-soft);border-left-color:var(--accent);font-weight:500}
-nav a.on .n{color:var(--accent)}
-nav .sub{padding-left:24px;font-size:13px;color:var(--muted)}
+.navrow a .n{font:400 11px/1 var(--mono);color:var(--nav-n);min-width:14px;padding-top:3px}
+.navrow a:hover{background:var(--rule-soft);color:var(--ink)}
+.navrow a.on{color:var(--accent);background:var(--accent-soft);border-left-color:var(--accent);font-weight:500}
+.navrow a.on .n{color:var(--accent)}
+
+.navchev{
+  flex:none;align-self:stretch;width:17px;
+  display:flex;align-items:center;justify-content:center;
+  background:none;border:0;padding:0;border-radius:3px;
+  color:var(--nav-n);cursor:pointer;
+}
+.navchev.pad{pointer-events:none}
+.navchev:hover{color:var(--ink);background:var(--rule-soft)}
+.navchev svg{
+  width:9px;height:9px;fill:none;stroke:currentColor;
+  stroke-width:2;stroke-linecap:round;stroke-linejoin:round;
+  transition:transform .15s ease;
+}
+.navchev[aria-expanded="false"] svg{transform:rotate(-90deg)}
+
+.navsub{display:flex;flex-direction:column;gap:1px;margin:1px 0 3px 26px}
+.navsub.collapsed{display:none}
+.navsub a{
+  padding:4px 8px;border-radius:4px;text-decoration:none;
+  font-size:12.5px;line-height:1.5;color:var(--muted);
+  border-left:2px solid transparent;margin-left:-2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.navsub a:hover{background:var(--rule-soft);color:var(--ink)}
+.navsub a.on{color:var(--accent);border-left-color:var(--accent);background:var(--accent-soft)}
 
 .railfoot{
   margin-top:auto;padding:14px 6px 0;border-top:1px solid var(--rule);
@@ -229,6 +256,30 @@ mark{background:var(--mark);color:inherit;padding:.05em .1em;border-radius:2px}
 .dfoot button.primary:hover{opacity:.9;color:var(--accent-fg)}
 tr[data-key]{cursor:pointer}
 tr[data-key]:hover td.name{color:var(--accent)}
+
+/* ---------- 折叠 ---------- */
+.foldbtn{
+  display:flex;align-items:baseline;gap:13px;width:100%;
+  font:inherit;color:inherit;background:none;border:0;padding:0;
+  text-align:left;cursor:pointer;
+}
+.foldbtn:hover{color:var(--accent)}
+.chev{
+  width:11px;height:11px;flex:none;align-self:center;
+  fill:none;stroke:currentColor;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;
+  transition:transform .15s ease;
+}
+.foldbtn[aria-expanded="false"] .chev{transform:rotate(-90deg)}
+.foldbody.collapsed{display:none}
+
+.foldall{display:flex;gap:6px}
+.foldall button{
+  flex:1;font:400 12.5px/1 var(--sans);color:var(--muted);
+  background:none;border:1px solid var(--rule);border-radius:4px;
+  padding:6px 4px;cursor:pointer;
+}
+.foldall button:hover{color:var(--ink);border-color:var(--muted)}
 
 /* ---------- 响应式 ---------- */
 .railtoggle{

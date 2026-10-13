@@ -1524,10 +1524,7 @@ SECTIONS.forEach(sec => {
   doc.appendChild(el);
 });
 
-/* 目录 */
-nav.innerHTML = SECTIONS.map(s =>
-  `<a href="#${s.id}" data-sec="${s.id}"><span class="n">${s.num}</span><span>${esc(s.title)}</span></a>`
-).join("");
+/* 目录：等折叠容器建好之后再生成，见下方「折叠」一节 */
 
 /* ---- 子代理目录 ---- */
 const AGENT_PREFIX_MAP = {
@@ -1574,6 +1571,144 @@ const AGENT_PREFIX_MAP = {
   host.insertAdjacentHTML("afterbegin",
     `<p class="hint">共 ${AGENTS.length} 个，按用途分组。点文件名可复制，直接说「用 <b>最小变更工程师</b>」或 <b>@</b> 唤起即可调用。</p>`);
 })();
+
+/* ============================================================
+   折叠
+   ============================================================ */
+
+const FOLD_MAP = new Map();
+
+function setUpFold(heading){
+  // 只遇到同级或更高级的标题才停，否则 h2 会被紧跟其后的 h3 立刻截断
+  const level = Number(heading.tagName[1]);
+
+  // 把标题之后、下一个同级标题之前的兄弟节点收进一个容器
+  const body = document.createElement("div");
+  body.className = "foldbody";
+  let node = heading.nextSibling;
+  while(node){
+    const next = node.nextSibling;
+    if(node.nodeType === 1 && /^H[1-6]$/.test(node.tagName) && Number(node.tagName[1]) <= level) break;
+    body.appendChild(node);
+    node = next;
+  }
+  if(!body.firstChild) return;
+  body.id = `fold-${FOLD_MAP.size}`;
+  heading.parentNode.insertBefore(body, heading.nextSibling);
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "foldbtn";
+  btn.setAttribute("aria-expanded", "true");
+  btn.setAttribute("aria-controls", body.id);
+  btn.innerHTML = '<svg class="chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>';
+  while(heading.firstChild) btn.appendChild(heading.firstChild);
+  heading.appendChild(btn);
+
+  btn.addEventListener("click", () => toggleFold(heading, undefined));
+  FOLD_MAP.set(body, {heading, btn});
+}
+
+function toggleFold(heading, force){
+  const body = heading.nextElementSibling;
+  if(!body || !body.classList.contains("foldbody")) return;
+  const expanded = force === undefined ? body.classList.contains("collapsed") : force;
+  body.classList.toggle("collapsed", !expanded);
+  const entry = FOLD_MAP.get(body);
+  if(!entry) return;
+  entry.btn.setAttribute("aria-expanded", String(expanded));
+  /* 左栏目录跟着一起开关，两边状态不能对不上 */
+  if(entry.navBtn){
+    entry.navBtn.setAttribute("aria-expanded", String(expanded));
+    if(entry.navSub) entry.navSub.classList.toggle("collapsed", !expanded);
+  }
+}
+
+/* 先处理 h2，再处理 h3，这样 h3 的容器会正确嵌在 h2 容器里 */
+doc.querySelectorAll("h2").forEach(setUpFold);
+doc.querySelectorAll("h3").forEach(setUpFold);
+
+/* ============================================================
+   左栏目录：章节 + 小节两级
+   ============================================================ */
+
+SECTIONS.forEach(sec => {
+  const el = document.getElementById(sec.id);
+  const subs = [...el.querySelectorAll("h3:not(.agroup)")];
+
+  const group = document.createElement("div");
+  group.className = "navgroup";
+
+  const row = document.createElement("div");
+  row.className = "navrow";
+
+  let navBtn = null;
+  if(subs.length){
+    navBtn = document.createElement("button");
+    navBtn.type = "button";
+    navBtn.className = "navchev";
+    navBtn.setAttribute("aria-expanded", "true");
+    navBtn.setAttribute("aria-label", `展开或折叠「${sec.title}」`);
+    navBtn.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>';
+    row.appendChild(navBtn);
+  } else {
+    const pad = document.createElement("span");
+    pad.className = "navchev pad";
+    row.appendChild(pad);
+  }
+
+  const link = document.createElement("a");
+  link.href = `#${sec.id}`;
+  link.dataset.sec = sec.id;
+  link.innerHTML = `<span class="n">${sec.num}</span><span>${esc(sec.title)}</span>`;
+  row.appendChild(link);
+  group.appendChild(row);
+
+  let subBox = null;
+  if(subs.length){
+    subBox = document.createElement("div");
+    subBox.className = "navsub";
+    subs.forEach((h, i) => {
+      if(!h.id) h.id = `${sec.id}-sub-${i}`;
+      const a = document.createElement("a");
+      a.href = `#${h.id}`;
+      a.dataset.sub = h.id;
+      a.textContent = h.textContent.trim().split("（")[0].trim();
+      subBox.appendChild(a);
+    });
+    group.appendChild(subBox);
+  }
+
+  nav.appendChild(group);
+
+  /* 把左栏的三角和正文该节的折叠容器绑到一起 */
+  if(navBtn){
+    const foldBody = el.querySelector(":scope > .foldbody");
+    const entry = foldBody && FOLD_MAP.get(foldBody);
+    if(entry){
+      entry.navBtn = navBtn;
+      entry.navSub = subBox;
+      navBtn.addEventListener("click", () => toggleFold(entry.heading, undefined));
+    }
+  }
+});
+
+/* 跳转前先把沿途收起的层级展开，否则目标藏在折叠区里 */
+function reveal(el){
+  for(let p = el.parentElement; p; p = p.parentElement){
+    if(p.classList.contains("foldbody") && p.classList.contains("collapsed")){
+      const entry = FOLD_MAP.get(p);
+      if(entry) toggleFold(entry.heading, true);
+    }
+  }
+}
+
+document.getElementById("foldall").addEventListener("click", () => {
+  FOLD_MAP.forEach(entry => toggleFold(entry.heading, false));
+});
+document.getElementById("unfoldall").addEventListener("click", () => {
+  FOLD_MAP.forEach(entry => toggleFold(entry.heading, true));
+});
 
 /* ============================================================
    索引（供搜索）
@@ -1700,6 +1835,7 @@ function jump(i){
   qEl.value = "";
   closeResults();
   requestAnimationFrame(() => {
+    reveal(m.el);
     m.el.scrollIntoView({block:"center", behavior:"smooth"});
     m.el.classList.add("flash");
     setTimeout(() => m.el.classList.remove("flash"), 1200);
@@ -1787,6 +1923,7 @@ function jumpToKey(key){
   closeResults();
   if(!el) return;
   requestAnimationFrame(() => {
+    reveal(el);
     el.scrollIntoView({block:"center", behavior:"smooth"});
     el.classList.add("flash");
     setTimeout(() => el.classList.remove("flash"), 1200);
@@ -1853,7 +1990,9 @@ doc.addEventListener("click", e => {
    导航高亮 + 移动端抽屉
    ============================================================ */
 
-const navLinks = [...nav.querySelectorAll("a")];
+const navLinks = [...nav.querySelectorAll(".navrow a")];
+const subLinks = [...nav.querySelectorAll(".navsub a")];
+
 function syncNav(){
   let cur = SECTIONS[0].id;
   for(const s of SECTIONS){
@@ -1861,6 +2000,14 @@ function syncNav(){
     if(el && el.getBoundingClientRect().top <= 90) cur = s.id;
   }
   navLinks.forEach(a => a.classList.toggle("on", a.dataset.sec === cur));
+
+  /* 折叠起来的小节 offsetParent 是 null，不参与判定 */
+  let curSub = "";
+  subLinks.forEach(a => {
+    const el = document.getElementById(a.dataset.sub);
+    if(el && el.offsetParent !== null && el.getBoundingClientRect().top <= 90) curSub = a.dataset.sub;
+  });
+  subLinks.forEach(a => a.classList.toggle("on", a.dataset.sub === curSub));
 }
 let ticking = false;
 window.addEventListener("scroll", () => {
@@ -1870,7 +2017,21 @@ window.addEventListener("scroll", () => {
 }, {passive:true});
 syncNav();
 
-navLinks.forEach(a => a.addEventListener("click", () => rail.classList.remove("open")));
+nav.addEventListener("click", e => {
+  /* 点进折叠着的章节或小节时先展开，避免落在空白上 */
+  const secLink = e.target.closest(".navrow a");
+  if(secLink){
+    const fb = document.querySelector(`#${secLink.dataset.sec} > .foldbody`);
+    const entry = fb && FOLD_MAP.get(fb);
+    if(entry && fb.classList.contains("collapsed")) toggleFold(entry.heading, true);
+  }
+  const subLink = e.target.closest(".navsub a");
+  if(subLink){
+    const el = document.getElementById(subLink.dataset.sub);
+    if(el) reveal(el);
+  }
+  if(e.target.closest("a")) rail.classList.remove("open");
+});
 
 const toggle = document.getElementById("railtoggle");
 toggle.addEventListener("click", () => {
