@@ -342,10 +342,16 @@ doc.querySelectorAll("section").forEach(sec => {
 const chipsEl = document.getElementById("chips");
 let activeCat = "";
 
-chipsEl.innerHTML = `<button data-cat="" class="on">全部<span class="c">${INDEX.length}</span></button>`
+/* 按钮上的数字是「该分类下可被搜索到的条数」，不是条目数——
+   它要回答的是「点下去能搜到多少」，所以按索引条目算。含义放在 title 里说清。 */
+const chipTitle = (name, n) => `${name}分类，共 ${n} 条可被搜索的内容`;
+
+chipsEl.innerHTML =
+  `<button data-cat="" class="on" title="${chipTitle("全部", INDEX.length)}">全部<span class="c">${INDEX.length}</span></button>`
   + SECTIONS.map(s => {
       const n = INDEX.filter(r => r.cat === s.id).length;
-      return `<button data-cat="${s.id}">${esc(CAT_LABEL[s.id])}<span class="c">${n}</span></button>`;
+      return `<button data-cat="${s.id}" title="${chipTitle(CAT_LABEL[s.id], n)}">`
+        + `${esc(CAT_LABEL[s.id])}<span class="c">${n}</span></button>`;
     }).join("");
 
 chipsEl.addEventListener("click", e => {
